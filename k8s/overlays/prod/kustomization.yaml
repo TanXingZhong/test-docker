@@ -1,0 +1,17 @@
+namespace: micro-prod
+
+resources:
+  - ../../base/namespace.yaml
+  - ../../base/deployment.yaml
+  - ../../base/service.yaml
+  - ./namespace.yaml
+
+patches:
+  - path: patch-deployment.yaml
+    target:
+      kind: Deployment
+      name: service-a
+images:
+  - name: REPLACEME/service-a
+    newName: REPLACEME/service-a
+    newTag: latest

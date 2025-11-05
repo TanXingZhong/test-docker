@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-a
+  namespace: micro-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: service-a
+  template:
+    metadata:
+      labels:
+        app: service-a
+    spec:
+      containers:
+        - name: service-a
+          image: REPLACEME/service-a:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ENV
+              value: "prod"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-a
+  namespace: micro-prod
+spec:
+  selector:
+    app: service-a
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  type: ClusterIP

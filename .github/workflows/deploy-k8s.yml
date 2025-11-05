@@ -1,0 +1,53 @@
+name: Deploy to Kubernetes (Kustomize)
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubectl
+        run: |
+          curl -L -o kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/kubectl
+          kubectl version --client
+
+      - name: Install kustomize
+        run: |
+          curl -sSL https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh | bash
+          sudo mv kustomize /usr/local/bin/kustomize
+          kustomize version
+
+      - name: Decode kubeconfig
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
+          chmod 600 kubeconfig
+
+      - name: Set KUBECONFIG
+        run: echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+
+      - name: Compute image tag
+        id: tag
+        run: echo "value=$(bash scripts/image_tag.sh)" >> $GITHUB_OUTPUT
+
+      - name: Set images in Kustomize
+        run: |
+          tag='${{ steps.tag.outputs.value }}'
+          registry='${{ secrets.REGISTRY }}'
+          ns='${{ secrets.IMAGE_NAMESPACE }}'
+          # Example: update service-a image to new tag
+          pushd k8s/overlays/prod
+          kustomize edit set image REPLACEME/service-a=${registry}/${ns}/service-a:${tag}
+          popd
+
+      - name: Apply manifests
+        run: |
+          kustomize build k8s/overlays/prod | kubectl apply -f -
+          kubectl -n micro-prod rollout status deploy/service-a --timeout=120s

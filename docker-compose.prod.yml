@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  service-a:
+    image: ${REGISTRY}/${IMAGE_NAMESPACE}/service-a:${IMAGE_TAG}
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - ENV=prod
+  service-b:
+    image: ${REGISTRY}/${IMAGE_NAMESPACE}/service-b:${IMAGE_TAG}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - ENV=prod
