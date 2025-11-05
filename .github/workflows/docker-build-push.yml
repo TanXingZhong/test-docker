@@ -2,7 +2,7 @@ name: Build & Push Images (Changed Services)
 
 on:
   push:
-    branches: [ "**" ]
+    branches: ["**"]
   pull_request:
 
 jobs:
